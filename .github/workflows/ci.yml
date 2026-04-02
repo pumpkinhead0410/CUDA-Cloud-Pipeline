@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Default minimal permissions; individual jobs override as needed.
+permissions:
+  contents: read
+
 env:
   PYTHON_VERSION: "3.11"
   IMAGE_NAME:     cuda-cloud-pipeline
@@ -15,6 +19,8 @@ jobs:
   lint:
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +47,8 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint
+    permissions:
+      contents: read
     env:
       USE_STUB: "1"           # Force stub engine – no GPU in CI
 
@@ -72,6 +80,8 @@ jobs:
     name: Docker Build (multi-stage)
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +103,8 @@ jobs:
   terraform-validate:
     name: Terraform Validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4

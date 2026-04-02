@@ -23,7 +23,6 @@ Usage
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import os
 from typing import Any
@@ -210,8 +209,7 @@ class StubEngine:
             name: np.zeros(shape, dtype=np.float32) for name, shape in self._output_shapes.items()
         }
 
-    @contextlib.contextmanager
-    def __enter__(self):
+    def __enter__(self) -> StubEngine:
         return self
 
     def __exit__(self, *_: Any) -> None:
