@@ -1,0 +1,44 @@
+version: "3.9"
+
+# Local development compose file.
+# Requires NVIDIA Container Toolkit for GPU access.
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml up --build
+#
+# Env file .env.local is loaded automatically when present.
+
+services:
+  inference-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runtime
+    image: cuda-cloud-pipeline:dev
+    container_name: inference-api
+    ports:
+      - "8080:8080"
+    environment:
+      USE_STUB: "${USE_STUB:-1}"          # default stub in local dev
+      MODEL_NAME: "${MODEL_NAME:-local}"
+      ENGINE_PATH: /models/model.engine
+      STUB_OUTPUT_DIM: "1000"
+    volumes:
+      - type: bind
+        source: ../models
+        target: /models
+        read_only: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped

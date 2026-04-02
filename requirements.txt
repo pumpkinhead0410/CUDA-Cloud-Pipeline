@@ -1,0 +1,12 @@
+# ── Core runtime dependencies ─────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+numpy>=1.26.0
+numba>=0.59.0
+
+# ── Optional GPU inference (not available in CPU-only environments) ────────
+# tensorrt>=10.0.0
+# pycuda>=2024.1
+# onnx>=1.16.0
+# torch>=2.3.0         # only for ModelConverter.from_torch()
