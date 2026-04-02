@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inference-api-config
+  namespace: mlops
+  labels:
+    app: inference-api
+data:
+  MODEL_NAME:      "default"
+  STUB_OUTPUT_DIM: "1000"
+  # ENGINE_PATH is injected via the deployment; override here if needed
+  ENGINE_PATH: "/models/model.engine"

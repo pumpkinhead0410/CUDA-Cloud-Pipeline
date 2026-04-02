@@ -4,3 +4,53 @@
 *.ptx
 *.cubin
 *.fatbin
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+
+# Test & coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Ruff / mypy caches
+.ruff_cache/
+.mypy_cache/
+
+# CUDA / CMake build artefacts
+src/cuda/kernels/build/
+build/
+
+# TensorRT / model artefacts
+*.engine
+*.trt
+*.onnx
+*.plan
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/tfplan
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/override.tf
+terraform/override.tf.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker / local env
+.env
+.env.local
+models/

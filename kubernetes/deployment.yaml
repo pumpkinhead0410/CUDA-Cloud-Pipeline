@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-api
+  namespace: mlops
+  labels:
+    app: inference-api
+    version: "1.0.0"
+spec:
+  # Initial replica count; the HPA will take over from here.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inference-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0        # zero-downtime deploys
+  template:
+    metadata:
+      labels:
+        app: inference-api
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "8080"
+        prometheus.io/path:   "/metrics"
+    spec:
+      # ── Scheduling ──────────────────────────────────────────────────────
+      nodeSelector:
+        accelerator: nvidia-gpu       # target GPU node group in EKS
+
+      tolerations:
+        - key:      "nvidia.com/gpu"
+          operator: "Exists"
+          effect:   "NoSchedule"
+
+      # ── Security context ────────────────────────────────────────────────
+      securityContext:
+        runAsNonRoot: true
+        runAsUser:    10001
+        runAsGroup:   10001
+        fsGroup:      10001
+
+      # ── Init: wait for the engine file to be present ────────────────────
+      initContainers:
+        - name: wait-for-model
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until [ -f /models/model.engine ]; do
+                echo "Waiting for model.engine…"; sleep 5
+              done
+              echo "Model found."
+          volumeMounts:
+            - name: models-volume
+              mountPath: /models
+              readOnly: true
+
+      containers:
+        - name: inference-api
+          # Replaced by CD pipeline: registry/repo:sha
+          image: REGISTRY_PLACEHOLDER/cuda-cloud-pipeline:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: inference-api-config
+
+          env:
+            - name: USE_STUB
+              value: "0"
+
+          # ── GPU resource request ───────────────────────────────────────
+          resources:
+            requests:
+              cpu:             "2"
+              memory:          "4Gi"
+              nvidia.com/gpu:  "1"
+            limits:
+              cpu:             "4"
+              memory:          "8Gi"
+              nvidia.com/gpu:  "1"
+
+          # ── Health probes ──────────────────────────────────────────────
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds:       15
+            failureThreshold:    3
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds:       10
+            failureThreshold:    3
+
+          # ── Volume mounts ──────────────────────────────────────────────
+          volumeMounts:
+            - name: models-volume
+              mountPath: /models
+              readOnly: true
+
+          # ── Security ──────────────────────────────────────────────────
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem:   true
+            capabilities:
+              drop: ["ALL"]
+
+      volumes:
+        - name: models-volume
+          # In production replace with a PVC backed by EFS / S3 CSI driver
+          emptyDir: {}
+
+      terminationGracePeriodSeconds: 60
