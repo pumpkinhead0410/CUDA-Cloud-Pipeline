@@ -1,0 +1,17 @@
+# 기초 수학 및 데이터 처리
+numpy
+pandas
+
+# AI 프레임워크 (CUDA 12.4용 최신 버전)
+torch
+torchvision
+torchaudio
+
+# HuggingFace 및 모델 로드 관련
+transformers
+accelerate
+safetensors
+
+# 최적화 및 모니터링
+tqdm
+psutil
